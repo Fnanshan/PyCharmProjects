@@ -50,15 +50,13 @@ print('---------面向对象编程---------')
 #             self.__score = score
 #         else:
 #             raise ValueError('bad score')
-
-
+#
+#
 # bart = Student('Bart Simpson', 59)
 # lisa = Student('Lisa Simpson', 87)
 # bart.print_score()
 # lisa.print_score()
-# print(bart)
-# print(lisa)
-# # 数据封装
+# # # 数据封装
 # print(' ---数据封装---')
 # print(bart.get_grade())
 # print(lisa.get_grade())
@@ -156,13 +154,14 @@ print('---------面向对象编程---------')
 #
 # dog = MyDog()
 # print(len(dog))
-#
+
 # #  getattr()、setattr()以及hasattr()，我们可以直接操作一个对象的状态
 #
 #
 # class MyObject(object):
 #     def __init__(self):
 #         self.x = 9
+#         self.y = 10
 #
 #     def power(self):
 #         return self.x * self.x
@@ -171,20 +170,21 @@ print('---------面向对象编程---------')
 # obj = MyObject()
 # # 获取对象的属性
 # print(hasattr(obj, 'x'))    # 有属性'x'吗？
-# print(hasattr(obj, 'y'))    # 有属性'y'吗？
+# # print(hasattr(obj, 'y'))    # 有属性'y'吗？
 # setattr(obj, 'y', 19)       # 设置一个属性'y'
 # print(hasattr(obj, 'y'))
 # print(getattr(obj, 'y'))    # 获取属性'y'
 # # print(getattr(obj, 'z'))  # 获取不存在的属性，会抛出AttributeError的错误
 # print(getattr(obj, 'z', 404))  # 传入一个default参数，如果属性不存在，就返回默认值
-# # 获取对象的方法
+# # # 获取对象的方法
 # print(hasattr(obj, 'power'))    # 有属性'power'吗？
 # print(getattr(obj, 'power'))    # 获取属性'power'
 # fn = getattr(obj, 'power')      # 获取属性'power'并赋值到变量fn
 # print(fn)                       # fn指向obj.power
 # print(fn())                     # 调用fn()与调用obj.power()是一样的
 
-# 实例属性和类属性
+
+# # 实例属性和类属性
 # class Student(object):
 #     def __init__(self, name):
 #         self.name = name
@@ -193,9 +193,12 @@ print('---------面向对象编程---------')
 #         pass
 #
 #
+# # 可以证明 name 是类属性，然而score知识实例 s 的属性，不是实例 t 的属性
 # s = Student('Bob')
 # s.score = 90
 # print(dir(s))
+# t = Student('daemon')
+# print(dir(t))
 
 
 # # 练习
@@ -205,7 +208,7 @@ print('---------面向对象编程---------')
 #     count = 0
 #
 #     def __init__(self, name):
-#         self.name = name
+#         self.__name = name
 #         Student.count = Student.count + 1
 #
 #
@@ -629,6 +632,128 @@ from enum import Enum, unique
 
 
 # 使用元类
+class ListMetaclass(type):
+    def __new__(cls, name, bases, attrs):
+        attrs['add'] = lambda self, value: self.append(value)
+        return type.__new__(cls, name, bases, attrs)
+
+
+class MyList(list, metaclass=ListMetaclass):
+    pass
+
+
+L = MyList()
+L.add(1)
+print(L)
+
+print('# 在ORM框架中运用metaClass')
+
+
+# 实现ORM
+class Field(object):
+    def __init__(self, name, column_type):
+        self.name = name
+        self.column_type = column_type
+
+    def __str__(self):
+        return '<%s : %s>' % (self.__class__.__name__, self.name)
+
+
+class StringField(Field):
+    def __init__(self, name):
+        super(StringField, self).__init__(name, 'varchar(100)')
+
+
+class IntegerField(Field):
+    def __init__(self, name):
+        super(IntegerField, self).__init__(name, 'bigint')
+
+
+# Model只是一个基类，通过metaclass=ModelMetaclass 将具体的子类如User的映射信息读取出来
+class ModelMetaclass(type):
+    # 元类必须实现__new__方法，当一个类（User）指定通过某元类来创建，那么就会调用该元类的__new__方法
+    # 该方法接收4个参数
+    # cls为当前准备创建的类的对象
+    # name为类的名字，创建User类，则name便是User
+    # bases类继承的父类集合,创建User类，则base便是Model
+    # attrs为类的属性/方法集合，创建User类，则attrs便是一个包含User类属性的dict
+    def __new__(cls, name, bases, attrs):
+        # 排除掉对Model类的修改（直接创建Model类，不用读取***信息）
+        # 因为Model类是基类，所以排除掉，如果你print(name)的话，会依次打印出Model,User,Blog，即所有的Model子类，因为这些子类通过Model间接继承元类
+        if name == 'Model':
+            return type.__new__(cls, name, bases, attrs)
+        print('Found model : %s' % name)
+        # mappings 是字典（k:v)，用于存储所有的字段、字段值
+        mappings = dict()
+        # 在当前类（比如User）中查找定义的类的所有属性，
+        # 如果找到一个Field属性，就把它保存到一个__mappings__的dict中，
+        # 同时从类属性中删除该Field属性，
+        # 否则，容易造成运行时错误（实例的属性会遮盖类的同名属性）
+        for k, v in attrs.items():
+            if isinstance(v, Field):
+                print('Found mapping: %s ==> %s' % (k, v))
+                mappings[k] = v
+        for k in mappings.keys():
+            attrs.pop(k)
+        attrs['__mappings__'] = mappings   # 保存属性和列的映射关系
+        attrs['__table__'] = name          # 假设表名和类名一致，把表名保存到__table__中
+        return type.__new__(cls, name, bases, attrs)
+
+
+# dict = {id:12345, name:'dameon', email:'test@orm.org', password:'my-pwd'}
+class Model(dict, metaclass=ModelMetaclass):
+    def __init__(self, **kw):
+        super(Model, self).__init__(**kw)
+
+    def __getattr__(self, key):
+        try:
+            return self[key]
+        except KeyError:
+            raise AttributeError(r"'Model' object has no attribute '%s'" % key)
+
+    def __setattr__(self, key, value):
+        self[key] = value
+
+    def save(self):
+        fields = []
+        params = []
+        args = []
+        for k, v in self.__mappings__.items():
+            print('save().__mappings__ :', k, '<--->', v.name)
+            # 举例说明：v 是 <IntegerField : id> ，那么，v.name 是 id
+            # 所以，fields = ['id', 'username', 'email', 'password']
+            fields.append(v.name)
+            # 所以，params = ['?', '?', '?', '?']
+            # params.append('?')
+            # params = '12345,dameon,test@orm.org,my-pwd'
+            params.append(str(getattr(self, k, None)))
+            # getattr()用于获得属性值
+            # 所以，args = [12345, 'dameon', 'test@orm.org', 'my-pwd']
+            args.append(getattr(self, k, None))
+        # print(params)
+        # print(type(params))
+        # print('\'', '\',\''.join(params), '\'')
+        # 如果12345不是字符串，不能join()
+        # print(' ,'.join(['12345', 'dameon', 'test@orm.org', 'my-pwd']))
+        sql = 'insert into %s (%s) values (%s)' % (self.__table__, ','.join(fields), ','.join(params))
+        print('SQL: %s ' % sql)
+        print('ARGS: %s ' % str(args))
+
+
+# 期待这样写代码
+class User(Model):
+    id = IntegerField('id')
+    name = StringField('username')
+    email = StringField('email')
+    password = StringField('password')
+
+
+u = User(id=12345, name='dameon', email='test@orm.org', password='my-pwd')
+u.save()
+# 想一想，为什么在class User中会有__mappings__、__table__两个属性呢？
+print('__table__ :', u.__table__)
+for k, v in u.__mappings__.items():
+    print('__mappings__ :', k, '<--->', v)
 
 print('-----------error-debug-test---------')
 
@@ -786,7 +911,7 @@ def main():
         print('TypeError :', e)
 
 
-main()
+# main()
 
 
 # def f(x, y):
@@ -802,26 +927,25 @@ main()
 # print(ff)
 lambdaX = lambda x, y: int(x * 10 + y)
 
-# 当列表成员个数为1时，程序不会报错，但reduce没有正常运行
-f1 = reduce(lambdaX, '3')
-print(f1)
-print(f1, '->', type(f1))
-
-# reduce引用的列表成员，至少是两个才会正常执行
-f2 = reduce(lambdaX, [1, 2, 3])
-print(f2)
-print(f2, '->', type(f2))
-f20 = reduce(lambdaX, '12')
-print(f20)
-print(f20, '->', type(f20))
-
-f3 = reduce(lambdaX, [1.0])
-print(f3)
-print(f3, '->', type(f3))
-
-# 当列表成员个数为0时，程序报错
-# f4 = reduce(lambdaX, [])
-# print(f4)
-# print(f4, '->', type(f4))
-
+# # 当列表成员个数为1时，程序不会报错，但reduce没有正常运行
+# f1 = reduce(lambdaX, '3')
+# print(f1)
+# print(f1, '->', type(f1))
+#
+# # reduce引用的列表成员，至少是两个才会正常执行
+# f2 = reduce(lambdaX, [1, 2, 3])
+# print(f2)
+# print(f2, '->', type(f2))
+# f20 = reduce(lambdaX, '12')
+# print(f20)
+# print(f20, '->', type(f20))
+#
+# f3 = reduce(lambdaX, [1.0])
+# print(f3)
+# print(f3, '->', type(f3))
+#
+# # 当列表成员个数为0时，程序报错
+# # f4 = reduce(lambdaX, [])
+# # print(f4)
+# # print(f4, '->', type(f4))
 
