@@ -3,35 +3,35 @@ from email.utils import parseaddr, formataddr
 
 print('# 最简单的纯文本邮件')
 
-# from email.mime.text import MIMEText
-# from email.header import Header
+from email.mime.text import MIMEText
+from email.header import Header
+
+
+# 通过SMTP发送
+# 输入Email地址和口令
+from_addr = input('From : ')
+password = input('Password :')
+# 输入收件人地址
+to_addr = input('To :')
+# 输入SMTP服务器地址
+smtp_server = input('SMTP server :')
+
+
+def _format_addr(s):
+    name, addr = parseaddr(s)
+    return formataddr((Header(name, 'utf-8').encode(), addr))
 #
-#
-# # 通过SMTP发送
-# # 输入Email地址和口令
-# from_addr = input('From : ')
-# password = input('Password :')
-# # 输入收件人地址
-# to_addr = input('To :')
-# # 输入SMTP服务器地址
-# smtp_server = input('SMTP server :')
-#
-#
-# def _format_addr(s):
-#     name, addr = parseaddr(s)
-#     return formataddr((Header(name, 'utf-8').encode(), addr))
-#
-#
-# # 构造一个最简单的纯文本邮件
-# msg = MIMEText('天王盖地虎，宝塔镇河妖。', 'plain', 'utf-8')
-# # Q :554 DT:SPM 发送的邮件内容包含了未被许可的信息，或被系统识别为垃圾邮件。请检查是否有用户发送病毒或者垃圾邮件
-# # A :msg的From、To、Subject不填99%可能被判定为垃圾邮件
-# #    注意msg的From、To不会自动填的
-# # msg['From'] = _format_addr('Python爱好者 <%s>' % from_addr)
-# # msg['To'] = _format_addr('管理员 <%s>' % to_addr)
-# msg['Subject'] = Header('来自你大爷的问候......', 'utf-8').encode()  # ---------------成功
+
+# 构造一个最简单的纯文本邮件
+msg = MIMEText('天王盖地虎，宝塔镇河妖。', 'plain', 'utf-8')
+# Q :554 DT:SPM 发送的邮件内容包含了未被许可的信息，或被系统识别为垃圾邮件。请检查是否有用户发送病毒或者垃圾邮件
+# A :msg的From、To、Subject不填99%可能被判定为垃圾邮件
+#    注意msg的From、To不会自动填的
 # msg['From'] = _format_addr('Python爱好者 <%s>' % from_addr)
 # msg['To'] = _format_addr('管理员 <%s>' % to_addr)
+msg['Subject'] = Header('来自你大爷的问候......', 'utf-8').encode()  # ---------------成功
+msg['From'] = _format_addr('Python爱好者 <%s>' % from_addr)
+msg['To'] = _format_addr('管理员 <%s>' % to_addr)
 #
 #
 # import smtplib
@@ -222,66 +222,66 @@ print('# 通过POP3下载邮件')
 # # server.dele(index)
 # # 关闭连接
 # server.quit()
-
-print('# 解析邮件')
-
-from email.parser import Parser
-from email.header import decode_header
-from email.utils import parseaddr
-
-import poplib
-
-
-# 递归地打印出Message对象的层次结构
-# indent用于缩进显示
-def print_info(msg, indent=0):
-    if indent == 0:
-        for header in ['From', 'To', 'Subject']:
-            value = msg.get(header, '')
-            if value:
-                if header == 'Subject':
-                    value = decode_str(value)
-                else:
-                    hdr, addr = parseaddr(value)
-                    name = decode_str(hdr)
-                    value = u'%s <%s>' % (name, addr)
-            print('%s%s: %s' % ('  ' * indent, header, value))
-    if (msg.is_multipart()):
-        parts = msg.get_payload()
-        for n , part in enumerate(parts):
-            print('%spart %s' % ('   ' * indent, n))
-            print('%s---------------------------' % ('   ' * indent))
-            print_info(part, indent + 1)
-    else:
-        content_type = msg.get_content_type()
-        if content_type == 'text/plain' or content_type == 'text/html':
-            content = msg.get_payload(decode=True)
-            charset = guess_charset(msg)
-            if charset:
-                content = content.decode(charset)
-            print('^%sText: %s' % ('   ' * indent, content + '...'))
-        else:
-            print('%sAttachment: %s' % ('   ' * indent, content_type))
-
-
-# 邮件的Subjecy或者Email中包含的名字都是经过编码后的str,要正常显示，就必须decode.
-def decode_str(s):
-    value, charset = decode_header(s)[0]
-    if charset:
-        value = value.decode(charset)
-    return value
-
-
-# 文本邮件的内容也是str，需要检测编码
-def guess_charset(msg):
-    charset = msg.get_charset()
-    if charset is None:
-        content_type = msg.get('Content-Type', '').lower()
-        pos = content_type.find('charset=')
-        if pos >= 0:
-            charset = content_type[pos + 8:].strip()
-    return charset
-
-
-print_info(msg)
-
+#
+# print('# 解析邮件')
+#
+# from email.parser import Parser
+# from email.header import decode_header
+# from email.utils import parseaddr
+#
+# import poplib
+#
+#
+# # 递归地打印出Message对象的层次结构
+# # indent用于缩进显示
+# def print_info(msg, indent=0):
+#     if indent == 0:
+#         for header in ['From', 'To', 'Subject']:
+#             value = msg.get(header, '')
+#             if value:
+#                 if header == 'Subject':
+#                     value = decode_str(value)
+#                 else:
+#                     hdr, addr = parseaddr(value)
+#                     name = decode_str(hdr)
+#                     value = u'%s <%s>' % (name, addr)
+#             print('%s%s: %s' % ('  ' * indent, header, value))
+#     if (msg.is_multipart()):
+#         parts = msg.get_payload()
+#         for n , part in enumerate(parts):
+#             print('%spart %s' % ('   ' * indent, n))
+#             print('%s---------------------------' % ('   ' * indent))
+#             print_info(part, indent + 1)
+#     else:
+#         content_type = msg.get_content_type()
+#         if content_type == 'text/plain' or content_type == 'text/html':
+#             content = msg.get_payload(decode=True)
+#             charset = guess_charset(msg)
+#             if charset:
+#                 content = content.decode(charset)
+#             print('^%sText: %s' % ('   ' * indent, content + '...'))
+#         else:
+#             print('%sAttachment: %s' % ('   ' * indent, content_type))
+#
+#
+# # 邮件的Subjecy或者Email中包含的名字都是经过编码后的str,要正常显示，就必须decode.
+# def decode_str(s):
+#     value, charset = decode_header(s)[0]
+#     if charset:
+#         value = value.decode(charset)
+#     return value
+#
+#
+# # 文本邮件的内容也是str，需要检测编码
+# def guess_charset(msg):
+#     charset = msg.get_charset()
+#     if charset is None:
+#         content_type = msg.get('Content-Type', '').lower()
+#         pos = content_type.find('charset=')
+#         if pos >= 0:
+#             charset = content_type[pos + 8:].strip()
+#     return charset
+#
+#
+# print_info(msg)
+#

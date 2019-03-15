@@ -7,7 +7,7 @@ print('# 使用Web框架Flask')
 # from flask import Flask
 # from flask import request
 #
-# app = Flask(__name__)
+    # app = Flask(name)
 #
 # print(app)
 #

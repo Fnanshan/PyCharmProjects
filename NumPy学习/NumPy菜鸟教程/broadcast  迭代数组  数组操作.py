@@ -97,13 +97,13 @@ print('------------------迭代数组---------------')
 #     print(x, end=', ')
 # print(b.flags)
 
-a = np.arange(6).reshape(2, 3)
-print(a)
-print(a.T)
-print(a.T.flags)
-for x in np.nditer(a.T):
-    print(x, end=', ')
-print('\n')
+# a = np.arange(6).reshape(2, 3)
+# print(a)
+# print(a.T)
+# print(a.T.flags)
+# for x in np.nditer(a.T):
+#     print(x, end=', ')
+# print('\n')
 # #
 # # t = a.T.copy(order='F')
 # # print(t)
@@ -150,3 +150,108 @@ print('\n')
 #         print(it.iternext())
 #
 # print(a)
+
+print('----------------数组操作---------------')
+
+# a = np.arange(9).reshape(3, 3)
+# print(a)
+# for row in a:
+#     print(row)
+# print(a.flat)
+# for element  in a.flat:
+#     print(element)
+
+# a = np.arange(8).reshape(2, 4)
+# print(a)
+# print(a.flatten())
+# print(type(a.flatten()))
+# print(a.flatten(order='F'))
+
+# a = np.arange(8).reshape(2, 4)
+# print(a)
+# print(a.ravel())
+# print(a.ravel(order='F'))
+# print(a)
+
+# a = np.arange(12).reshape(3, 4)
+# print(a)
+# print(np.transpose(a))
+# print(a)
+# print(a.T)
+
+# 先理解轴axis的概念
+# # 一维数组
+# a = np.array([1, 2, 3, 4, 5])
+# print(a)
+# print(a.max(axis=0))
+
+# # 二维数组
+# a = np.array([[78, 34, 87, 25, 83], [25, 67, 97, 22, 13], [78, 43, 87, 45, 89]])
+# print(a)
+# print(a.max(axis=0))
+# print(a.max(axis=1))
+# 得知：axis=0就是竖轴的数据,第一行打印出了每列的最大值,axis=1就是横轴的
+
+# # 三维数组
+# a = np.array([[[0, 1], [2, 3]], [[4, 5], [6, 7]]])
+# print(a)
+# # print(a.max(axis=0))
+# print(a.max(axis=1))
+# print(a.max(axis=2))
+# a = np.array([[0, 1], [2, 3]])
+# b = np.array([[4, 5], [6, 7]])
+# print(a + b)
+
+# # # numpy.rollaxis
+# a = np.arange(8).reshape(2, 2, 2)
+# print(a)
+# 将轴2 滚动到轴0（宽度到深度）
+# print(np.rollaxis(a, 2))
+# # 将轴0 滚动到轴1（宽度到高度）
+# print(np.rollaxis(a, 2, 1))
+
+# np.swapaxes
+# a = np.arange(8).reshape(2, 4)
+# print(a)
+# print(np.swapaxes(a, 0, 1))
+# a = np.arange(8).reshape(2, 2, 2)
+# print(a)
+# print(np.swapaxes(a, 0, 2))
+
+print('数组操作-修改数组维度')
+
+x = np.array([[1], [2], [3]])
+y = np.array([4, 5, 6])
+print(x)
+print(y)
+
+# 对 y 广播 x
+b = np.broadcast(x, y)
+# 'b拥有iterator 属性，基于自身组件的迭代器元组
+
+print('对 y 广播 x :')
+r, c = b.iters
+
+# Python 3.x 为 next(context)
+try:
+    while True:
+        print(next(r), next(c))
+except StopIteration as e:
+    print(e)
+
+# shape属性返回广播对象的形状
+print('广播对象的形状 :')
+print(b.shape)
+# 手动使用broadcast将x于y相加
+b = np.broadcast(x, y)
+c = np.empty(b.shape)
+
+print('手动使用broadcast将x于y相加 :')
+print(c.shape)
+c.flat = [u + v for (u, v) in b]
+
+print('调用flat函数 :')
+print(c)
+# 获得了和NumPy内建的广播支持相同的结果
+print('x + y = ')
+print(x + y)
